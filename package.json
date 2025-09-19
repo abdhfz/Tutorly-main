@@ -1,0 +1,39 @@
+{
+  "name": "tutorly-frontend",
+  "version": "1.0.0",
+  "description": "AI-Powered Educational Platform Frontend",
+  "main": "index.html",
+  "scripts": {
+    "start": "python run_server.py",
+    "server": "python app.py",
+    "dev": "python run_server.py",
+    "install-deps": "pip install -r requirements.txt",
+    "setup": "pip install -r requirements.txt && python run_server.py",
+    "health": "curl http://localhost:5000/api/health",
+    "test-api": "curl -X GET http://localhost:5000/api/health && echo '\nAPI is working!'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tutorly.git"
+  },
+  "keywords": [
+    "education",
+    "ai",
+    "tutoring",
+    "gemini",
+    "flask",
+    "react",
+    "learning"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-username/tutorly/issues"
+  },
+  "homepage": "https://github.com/your-username/tutorly#readme",
+  "engines": {
+    "python": ">=3.7"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

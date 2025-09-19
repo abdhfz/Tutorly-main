@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorly Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Base: elegant black & white theme */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #0b0f19;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        /* Cards */
+        .card {
+            background-color: #ffffff;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            padding: 1.25rem 1.25rem;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.3s, color 0.3s;
+        }
+        .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.06); }
+
+        body.dark .card {
+            background-color: #0b0b0b;
+            border-color: #1f2937;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.03);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #0b0f19;
+            color: #ffffff;
+            border: 1px solid #0b0f19;
+            padding: 0.45rem 0.9rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.05s ease, box-shadow 0.2s ease;
+        }
+        .btn-primary:hover { background-color: #111827; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .btn-primary:active { transform: translateY(1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        body.dark .btn-primary { background-color: #ffffff; color: #000000; border-color: #ffffff; }
+        body.dark .btn-primary:hover { background-color: #e5e7eb; }
+
+        /* Typography */
+        h1, h2, h3, h4 { letter-spacing: -0.02em; }
+        h1 { font-size: 2rem; margin: 0.25rem 0 0.5rem; }
+        h2 { font-size: 1.5rem; margin: 0.25rem 0 0.5rem; }
+        h3 { font-size: 1.1rem; margin: 0.25rem 0 0.75rem; }
+        p { color: #4b5563; }
+        body.dark p { color: #9ca3af; }
+
+        /* Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.85rem 1.25rem;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            backdrop-filter: saturate(120%) blur(6px);
+        }
+        body.dark .navbar { background-color: #0b0b0b; border-color: #1f2937; }
+        .nav-links a { color: #111827; opacity: 0.8; padding: 0.25rem 0.35rem; border-radius: 6px; }
+        .nav-links a:hover { opacity: 1; text-decoration: none; background: #f3f4f6; }
+        .nav-links a.active { color: #000; border-bottom: 2px solid #000; }
+        body.dark .nav-links a { color: #e5e7eb; }
+        body.dark .nav-links a.active { color: #fff; border-color: #fff; }
+
+        /* Inputs / Selects */
+        input[type="text"], input[type="date"], input[type="email"],
+        input[type="password"], select, textarea {
+            background: #ffffff;
+            color: #0b0f19;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.55rem 0.75rem;
+            outline: none;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #111827; box-shadow: 0 0 0 3px rgba(17,24,39,0.1); }
+        body.dark input, body.dark select, body.dark textarea { background: #0f1115; color: #e5e7eb; border-color: #1f2937; }
+        body.dark input:focus, body.dark select:focus, body.dark textarea:focus { border-color: #e5e7eb; box-shadow: 0 0 0 3px rgba(229,231,235,0.12); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        thead th { text-align: left; font-weight: 600; color: #6b7280; font-size: 0.85rem; padding: 0.5rem 0.5rem; border-bottom: 1px solid #e5e7eb; }
+        tbody td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #f3f4f6; font-size: 0.95rem; }
+        tbody tr:hover { background: #fafafa; }
+        body.dark thead th { color: #9ca3af; border-color: #1f2937; }
+        body.dark tbody td { border-color: #111827; }
+        body.dark tbody tr:hover { background: #0b0b0b; }
+
+        /* Modals (backdrop already inline; tweak content style via class if needed) */
+        .modal-card { border-radius: 14px; border: 1px solid #e5e7eb; }
+        body.dark .modal-card { background: #0b0b0b; border-color: #1f2937; color: #fff; }
+
+        /* Layout helpers */
+        .main-content { width: 100%; max-width: none; margin: 0; padding: 1rem 0; }
+        .section { margin: 1rem 0; }
+
+        /* Calendar cell polish (keeps event colors) */
+        .cal-cell { border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; }
+        body.dark .cal-cell { background: #0f1115; border-color: #1f2937; }
+
+        /* Calendar UI */
+        .calendar-card { padding: 1rem; overflow: hidden; }
+        .calendar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; }
+        .calendar-title { margin:0; font-size: 1.1rem; }
+        .calendar-nav { display:flex; gap:0.5rem; }
+        .calendar-grid { display:grid; width: 100%; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 1rem; }
+        .calendar-weekday { font-weight:600; color:#6b7280; text-align:center; }
+        .calendar-cell { cursor:pointer; min-height:110px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:6px; display:flex; flex-direction:column; transition: box-shadow .15s ease, transform .05s ease; }
+        .calendar-cell:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
+        .calendar-cell.outside { background:#f3f4f6; }
+        body.dark .calendar-cell { background:#0f1115; border-color:#1f2937; }
+        .calendar-date { font-size:12px; color:#6b7280; margin-bottom:4px; text-align:right; }
+        .calendar-events { display:flex; flex-direction:column; gap:4px; }
+        .event-pill { color:#fff; border-radius:6px; padding:2px 6px; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .event-more { font-size:12px; color:#374151; }
+
+        /* Modal overlay */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:50; }
+        .modal-card { background:#fff; color:#111827; width: min(720px, 95vw); border-radius:12px; padding:1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        body.dark .modal-card { background:#0b0b0b; color:#fff; border:1px solid #1f2937; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: .5rem; }
+        .modal-actions { display:flex; gap:.5rem; }
+
+        /* Auth (login) enhancements */
+        #auth { position: relative; overflow: hidden; }
+        #auth:before { content:""; position:absolute; inset:-20%; pointer-events: none; z-index: 0; background: radial-gradient(closest-side, rgba(0,0,0,0.06), transparent 70%) -20% -20%/60% 60% no-repeat,
+                                                             radial-gradient(closest-side, rgba(0,0,0,0.06), transparent 70%) 120% 20%/60% 60% no-repeat; filter: blur(2px); }
+        body.dark #auth:before { pointer-events: none; z-index: 0; background: radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%) -20% -20%/60% 60% no-repeat,
+                                         radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%) 120% 20%/60% 60% no-repeat; }
+        #auth .card { position: relative; z-index: 1; max-width: 440px; padding: 1.5rem; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+        #auth .brand { display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; font-weight:700; font-size:1.15rem; }
+        #auth .subtle { color:#6b7280; margin-bottom: 1rem; }
+        #auth .auth-title { text-align:center; font-size: 1.6rem; margin: 0.25rem 0 0.75rem; }
+        #auth form { display:flex; flex-direction:column; gap: 0.75rem; }
+        #auth .input-group { display:flex; flex-direction:column; }
+        #auth .input-label { font-size: 0.85rem; color:#6b7280; margin: 0.15rem 0 0.25rem 0.15rem; }
+        #auth .btn-row { display:flex; justify-content:center; margin-top: 0.5rem; }
+
+        /* Auth styles */
+        #auth {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f9fafb;
+            padding: 0 1rem;
+        }
+
+        #auth .card {
+            max-width: 400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #auth input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        #auth button {
+            background-color: #000;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        /* Navbar styles */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        body.dark .navbar {
+            background-color: #374151;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-links a {
+            margin-left: 1rem;
+            text-decoration: none;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .nav-links a.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        /* Profile dropdown and top-right logo */
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .top-right img.top-right-logo {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 0.375rem;
+        }
+
+        .profile-button {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        body.dark .profile-button {
+            background: #4b5563;
+            border-color: #6b7280;
+            color: #fff;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            right: 0;
+            top: 130%;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            min-width: 220px;
+            z-index: 10;
+        }
+
+        body.dark .profile-dropdown {
+            background: #374151;
+            border-color: #4b5563;
+            color: #fff;
+        }
+
+        .profile-dropdown .item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .profile-dropdown .item + .item {
+            border-top: 1px solid #e5e7eb;
+        }
+
+        body.dark .profile-dropdown .item + .item {
+            border-top-color: #4b5563;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { display:none; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d1d5db;
+            transition: .2s;
+            border-radius: 9999px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 9999px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider { background-color: #2563eb; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Chat styles */
+        .chat-card {
+            display: flex;
+            flex-direction: column;
+            height: 36rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.5rem;
+            gap: 0.5rem;
+        }
+
+        .chat-message-user {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            margin-left: 2rem;
+            align-self: flex-end;
+        }
+
+        .chat-message-ai {
+            background-color: #f3f4f6;
+            color: #111827;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            margin-right: 2rem;
+            align-self: flex-start;
+            line-height: 1.6;
+            max-width: 85%;
+        }
+
+        .chat-message-ai h3,
+        .chat-message-ai h4,
+        .chat-message-ai h5 {
+            margin: 0.75rem 0 0.5rem 0;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .chat-message-ai h3 {
+            font-size: 1.1em;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 0.25rem;
+        }
+
+        .chat-message-ai h4 {
+            font-size: 1.05em;
+        }
+
+        .chat-message-ai h5 {
+            font-size: 1em;
+        }
+
+        .chat-message-ai strong {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .chat-message-ai em {
+            font-style: italic;
+            color: #374151;
+        }
+
+        .chat-message-ai ul,
+        .chat-message-ai ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .chat-message-ai li {
+            margin: 0.25rem 0;
+            line-height: 1.5;
+        }
+
+        .chat-message-ai p {
+            margin: 0.5rem 0;
+        }
+
+        .chat-message-ai p:first-child {
+            margin-top: 0;
+        }
+
+        .chat-message-ai p:last-child {
+            margin-bottom: 0;
+        }
+
+            .chat-message-ai br {
+                line-height: 1.2;
+            }
+
+            .chat-input-area {
+                display: flex;
+                gap: 0.5rem;
+                align-items: flex-end;
+            }
+
+            .chat-input-area input[type="text"] {
+                flex: 1;
+                padding: 0.5rem;
+                border-radius: 0.5rem;
+                border: 1px solid #d1d5db;
+                outline: none;
+            }
+
+            .image-upload-container {
+                position: relative;
+                display: inline-block;
+            }
+
+        .error-message {
+            color: #dc2626;
+            background-color: #fef2f2;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        /* Quick action styles */
+        .quick-actions-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .quick-action-btn {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .quick-action-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Layout styles */
+        .ai-tutor-layout {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .quick-actions-column {
+            flex: 1;
+        }
+
+        .ai-chat-column {
+            flex: 2;
+        }
+
+        .secondary-nav {
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #e5e7eb;
+            margin-top: 2rem;
+        }
+
+        .secondary-nav button {
+            background: none;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0 0.25rem;
+            transition: color 0.2s, border-bottom 0.2s;
+            color: inherit;
+        }
+
+        .secondary-nav button.active-tab {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        /* Button styles */
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Form styles */
+        input, select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            margin: 0.25rem;
+        }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+
+        /* Settings panel */
+        .settings-panel {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        body.dark .settings-panel {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+
+        .api-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .api-status.connected {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .api-status.disconnected {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .ai-tutor-layout {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Text formatting utility function
+        function formatText(text) {
+            if (!text) return '';
+            
+            // Split text into lines for better processing
+            let lines = text.split('\n');
+            let formatted = [];
+            let inList = false;
+            let listItems = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // Skip empty lines but add spacing
+                if (line === '') {
+                    if (inList) {
+                        formatted.push('<ul>' + listItems.join('') + '</ul>');
+                        listItems = [];
+                        inList = false;
+                    }
+                    formatted.push('<br>');
+                    continue;
+                }
+                
+                // Handle bullet points
+                if (line.match(/^[\-\*]\s+/)) {
+                    let content = line.replace(/^[\-\*]\s+/, '');
+                    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    listItems.push('<li>' + content + '</li>');
+                    inList = true;
+                    continue;
+                }
+                
+                // Handle numbered lists
+                if (line.match(/^\d+\.\s+/)) {
+                    if (inList && listItems.length > 0) {
+                        formatted.push('<ul>' + listItems.join('') + '</ul>');
+                        listItems = [];
+                    }
+                    let content = line.replace(/^\d+\.\s+/, '');
+                    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    listItems.push('<li>' + content + '</li>');
+                    inList = true;
+                    continue;
+                }
+                
+                // Close any open list
+                if (inList) {
+                    formatted.push('<ul>' + listItems.join('') + '</ul>');
+                    listItems = [];
+                    inList = false;
+                }
+                
+                // Handle headers (##, ###, etc.)
+                if (line.match(/^#{1,3}\s+/)) {
+                    let level = line.match(/^#{1,3}/)[0].length;
+                    let content = line.replace(/^#{1,3}\s+/, '');
+                    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    formatted.push(`<h${level + 2}>${content}</h${level + 2}>`);
+                    continue;
+                }
+                
+                // Handle regular paragraphs
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                line = line.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                formatted.push('<p>' + line + '</p>');
+            }
+            
+            // Close any remaining list
+            if (inList) {
+                formatted.push('<ul>' + listItems.join('') + '</ul>');
+            }
+            
+            return formatted.join('');
+        }
+
+        // React component for formatted text
+        function FormattedText({ text }) {
+            return (
+                <div 
+                    dangerouslySetInnerHTML={{ __html: formatText(text) }}
+                />
+            );
+        }
+
+        // (Removed) API Configuration Component
+
+        // API Service for Gemini
+        class GeminiService {
+            constructor(apiKey) {
+                this.apiKey = apiKey;
+                this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+            }
+
+            async sendMessage(message, conversationHistory = []) {
+                if (!this.apiKey) {
+                    throw new Error('Gemini API key not configured');
+                }
+
+                try {
+                    const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        {
+                                            text: `You are Tutorly, a helpful AI tutor assistant. Help students with their academic questions in a friendly and educational way. 
+
+Previous conversation:
+${conversationHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n')}
+
+Student: ${message}
+
+Please provide a helpful response:`
+                                        }
+                                    ]
+                                }
+                            ],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024,
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data.candidates[0].content.parts[0].text;
+                } catch (error) {
+                    console.error('Gemini API Error:', error);
+                    throw error;
+                }
+            }
+        }
+
+        // Generic API Service for Backend
+        class APIService {
+            constructor(baseUrl) {
+                this.baseUrl = baseUrl || '/api';
+            }
+
+            async request(endpoint, options = {}) {
+                try {
+                    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        },
+                        ...options
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            }
+
+            // User Management
+            async login(credentials) {
+                return this.request('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify(credentials)
+                });
+            }
+
+            async teacherLogin(credentials) {
+                return this.request('/auth/teacher/login', {
+                    method: 'POST',
+                    body: JSON.stringify(credentials)
+                });
+            }
+
+            // Teacher endpoints
+            async getTeacherStudents() {
+                return this.request('/teacher/students');
+            }
+
+            async teacherCreateAssignment(payload) {
+                return this.request('/teacher/assignments', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            async getTeacherCalendar(teacherId) {
+                return this.request(`/teacher/${teacherId}/calendar`);
+            }
+
+            async createTeacherCalendarEvent(teacherId, event) {
+                return this.request(`/teacher/${teacherId}/calendar`, {
+                    method: 'POST',
+                    body: JSON.stringify(event)
+                });
+            }
+
+            async deleteTeacherCalendarEvent(teacherId, eventId) {
+                return this.request(`/teacher/${teacherId}/calendar/${eventId}`, {
+                    method: 'DELETE'
+                });
+            }
+
+            async register(userData) {
+                return this.request('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+            }
+
+            // Todo Operations
+            async getTodos(userId) {
+                return this.request(`/todos/${userId}`);
+            }
+
+            async createTodo(userId, todo) {
+                return this.request(`/todos/${userId}`, {
+                    method: 'POST',
+                    body: JSON.stringify(todo)
+                });
+            }
+
+            async updateTodo(todoId, updates) {
+                return this.request(`/todos/${todoId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updates)
+                });
+            }
+
+            async deleteTodo(todoId) {
+                return this.request(`/todos/${todoId}`, {
+                    method: 'DELETE'
+                });
+            }
+
+            // Assignment Operations
+            async getAssignments(userId) {
+                return this.request(`/assignments/${userId}`);
+            }
+
+            async createAssignment(userId, assignment) {
+                return this.request(`/assignments/${userId}`, {
+                    method: 'POST',
+                    body: JSON.stringify(assignment)
+                });
+            }
+
+            async updateAssignment(assignmentId, updates) {
+                return this.request(`/assignments/${assignmentId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updates)
+                });
+            }
+
+            async deleteAssignment(assignmentId) {
+                return this.request(`/assignments/${assignmentId}`, {
+                    method: 'DELETE'
+                });
+            }
+
+            // Progress/Analytics
+            async getProgress(userId) {
+                return this.request(`/progress/${userId}`);
+            }
+
+            async updateProgress(userId, progressData) {
+                return this.request(`/progress/${userId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(progressData)
+                });
+            }
+
+            // Chat History
+            async getChatHistory(userId) {
+                return this.request(`/chat/${userId}`);
+            }
+
+            async saveChatMessage(userId, message) {
+                return this.request(`/chat/${userId}`, {
+                    method: 'POST',
+                    body: JSON.stringify(message)
+                });
+            }
+
+            // Image chat (multipart/form-data)
+            async sendImageMessage(userId, formData) {
+                try {
+                    const response = await fetch(`${this.baseUrl}/chat/${userId}/ai/image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Image API Error:', error);
+                    throw error;
+                }
+            }
+        }
+
+        // Enhanced Chatbot Component with Gemini Integration
+        function ChatbotPage({ setLoggedIn, setStudentName, setStudentId, studentId }) {
+            const quickActions = [
+                'Help me solve this math problem',
+                'Explain photosynthesis',
+                'Review my essay for grammar',
+                'Teach me about the Civil War',
+            ];
+
+            const [chatMessages, setChatMessages] = useState([]);
+            const [input, setInput] = useState('');
+            const [tab, setTab] = useState('ai-tutor');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+            const [selectedImage, setSelectedImage] = useState(null);
+            const [imagePreview, setImagePreview] = useState('');
+
+            const apiService = new APIService();
+
+            // Load chat history on component mount
+            useEffect(() => {
+                loadChatHistory();
+            }, [studentId]);
+
+            const loadChatHistory = async () => {
+                if (!studentId) return;
+                
+                try {
+                    const history = await apiService.getChatHistory(studentId);
+                    setChatMessages(history || []);
+                } catch (error) {
+                    console.log('No previous chat history found');
+                }
+            };
+
+            const handleImageChange = (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                setSelectedImage(file);
+                const reader = new FileReader();
+                reader.onload = () => setImagePreview(reader.result);
+                reader.readAsDataURL(file);
+            };
+
+            const removeSelectedImage = () => {
+                setSelectedImage(null);
+                setImagePreview('');
+            };
+
+            const sendMessage = async () => {
+                if (!input.trim() || isLoading) return;
+
+                const userMessage = { sender: 'user', text: input, timestamp: new Date().toISOString() };
+                const newMessages = [...chatMessages, userMessage];
+                setChatMessages(newMessages);
+                setInput('');
+                setIsLoading(true);
+                setError('');
+
+                try {
+                    // Ask backend to generate and persist AI response
+                    const result = await apiService.request(`/chat/${studentId}/ai`, {
+                        method: 'POST',
+                        body: JSON.stringify({ message: userMessage.text })
+                    });
+                    const aiMessage = {
+                        sender: 'ai',
+                        text: result.response,
+                        timestamp: result.timestamp || new Date().toISOString()
+                    };
+                    setChatMessages(prev => [...prev, aiMessage]);
+                } catch (error) {
+                    setError('Failed to get AI response: ' + error.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const sendImage = async () => {
+                if (!selectedImage || isLoading) return;
+
+                // Optimistic UI update: show user's message with preview
+                const userMessage = { sender: 'user', text: input || 'Image message', timestamp: new Date().toISOString(), imagePreview };
+                setChatMessages(prev => [...prev, userMessage]);
+                setIsLoading(true);
+                setError('');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('image', selectedImage);
+                    formData.append('message', input || 'What do you see in this image?');
+
+                    const result = await apiService.sendImageMessage(studentId, formData);
+                    const aiMessage = {
+                        sender: 'ai',
+                        text: result.response || 'I looked at the image, but could you also describe it?',
+                        timestamp: new Date().toISOString()
+                    };
+                    setChatMessages(prev => [...prev, aiMessage]);
+
+                    // Clear input and image selection
+                    setInput('');
+                    removeSelectedImage();
+                } catch (error) {
+                    setError('Failed to send image: ' + error.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const handleQuickAction = (action) => {
+                setInput(action);
+            };
+
+            return (
+                <div className="ai-tutor-layout">
+                    <div className="quick-actions-column">
+                        <div className="card">
+                            <h3>Quick Actions</h3>
+                            <div className="quick-actions-grid">
+                                {quickActions.map((action, i) => (
+                                    <button 
+                                        key={i} 
+                                        className="quick-action-btn"
+                                        onClick={() => handleQuickAction(action)}
+                                    >
+                                        {action}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="ai-chat-column">
+                        <div className="card chat-card">
+                            <h3>Chat with AI Tutor</h3>
+                            
+                            {error && (
+                                <div className="error-message">
+                                    {error}
+                                </div>
+                            )}
+                            
+                            <div className="chat-messages">
+                                {chatMessages.length === 0 ? (
+                                    <div style={{ textAlign: 'center', color: '#6b7280', marginTop: '2rem' }}>
+                                        <p>👋 Hi! I'm your AI tutor. How can I help you today?</p>
+                                        <p>Try asking me about homework, concepts, or use a quick action!</p>
+                                    </div>
+                                ) : (
+                                    chatMessages.map((msg, i) => (
+                                        <div key={i} className={msg.sender === 'user' ? 'chat-message-user' : 'chat-message-ai'}>
+                                            {msg.sender === 'ai' ? (
+                                                <FormattedText text={msg.text} />
+                                            ) : (
+                                                msg.text
+                                            )}
+                                            {msg.imagePreview && (
+                                                <div className="image-preview-container">
+                                                    <img src={msg.imagePreview} alt="uploaded preview" className="image-preview" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                                
+                                {isLoading && (
+                                    <div className="chat-message-ai">
+                                        <span>🤔 Thinking...</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className={`chat-input-area ${isLoading ? 'loading' : ''}`}>
+                                <div>
+                                    {imagePreview && (
+                                        <div className="image-preview-container">
+                                            <img src={imagePreview} alt="preview" className="image-preview" />
+                                            <button className="remove-image-btn" onClick={removeSelectedImage} title="Remove image">×</button>
+                                        </div>
+                                    )}
+                                    <div className="image-upload-container" title="Upload image">
+                                        <button className="image-upload-btn" disabled={isLoading}>📷</button>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="image-upload-input" 
+                                            onChange={handleImageChange}
+                                            disabled={isLoading}
+                                        />
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder="Ask me anything... (or add an image)"
+                                    onKeyPress={(e) => e.key === 'Enter' && (selectedImage ? sendImage() : sendMessage())}
+                                    disabled={isLoading}
+                                />
+                                <button 
+                                    onClick={selectedImage ? sendImage : sendMessage} 
+                                    className="btn-primary"
+                                    disabled={isLoading || (!input.trim() && !selectedImage)}
+                                >
+                                    {isLoading ? '...' : (selectedImage ? 'Send Image' : 'Send')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Enhanced Todo Component with API Integration
+        function TodoList({ studentId }) {
+            const [tasks, setTasks] = useState([]);
+            const [input, setInput] = useState('');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [filter, setFilter] = useState('all');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const apiService = new APIService();
+
+            useEffect(() => {
+                loadTodos();
+            }, [studentId]);
+
+            const loadTodos = async () => {
+                if (!studentId) {
+                    // Load from localStorage as fallback
+                    const savedTodos = localStorage.getItem(`todos_${studentId}`);
+                    if (savedTodos) {
+                        setTasks(JSON.parse(savedTodos));
+                    }
+                    return;
+                }
+
+                try {
+                    setIsLoading(true);
+                    const todos = await apiService.getTodos(studentId);
+                    setTasks(todos);
+                } catch (error) {
+                    console.error('Failed to load todos:', error);
+                    // Fallback to localStorage
+                    const savedTodos = localStorage.getItem(`todos_${studentId}`);
+                    if (savedTodos) {
+                        setTasks(JSON.parse(savedTodos));
+                    }
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const saveTodos = (newTasks) => {
+                // Save to localStorage as backup
+                localStorage.setItem(`todos_${studentId}`, JSON.stringify(newTasks));
+                setTasks(newTasks);
+            };
+
+            const addTask = async () => {
+                if (!input.trim() || isLoading) return;
+
+                const newTask = { 
+                    text: input, 
+                    done: false, 
+                    id: Date.now(),
+                    createdAt: new Date().toISOString()
+                };
+
+                try {
+                    if (studentId) {
+                        const savedTask = await apiService.createTodo(studentId, newTask);
+                        saveTodos([...tasks, savedTask]);
+                    } else {
+                        saveTodos([...tasks, newTask]);
+                    }
+                    setInput('');
+                } catch (error) {
+                    console.error('Failed to add todo:', error);
+                    // Add locally anyway
+                    saveTodos([...tasks, newTask]);
+                    setInput('');
+                }
+            };
+
+            const toggleDone = async (index) => {
+                const task = tasks[index];
+                const updatedTask = { ...task, done: !task.done };
+                const newTasks = [...tasks];
+                newTasks[index] = updatedTask;
+
+                try {
+                    if (task.id) {
+                        await apiService.updateTodo(task.id, { done: updatedTask.done });
+                    }
+                    saveTodos(newTasks);
+                } catch (error) {
+                    console.error('Failed to update todo:', error);
+                    saveTodos(newTasks);
+                }
+            };
+
+            const deleteTask = async (index) => {
+                const task = tasks[index];
+                
+                try {
+                    if (task.id) {
+                        await apiService.deleteTodo(task.id);
+                    }
+                    const newTasks = tasks.filter((_, i) => i !== index);
+                    saveTodos(newTasks);
+                } catch (error) {
+                    console.error('Failed to delete todo:', error);
+                    const newTasks = tasks.filter((_, i) => i !== index);
+                    saveTodos(newTasks);
+                }
+            };
+
+            const filteredTasks = tasks.filter((t) => {
+                const matchesSearch = t.text.toLowerCase().includes(searchQuery.toLowerCase());
+                if (filter === 'pending') return matchesSearch && !t.done;
+                if (filter === 'done') return matchesSearch && t.done;
+                return matchesSearch;
+            });
+
+            return (
+                <div style={{ padding: '1.5rem' }}>
+                    <h2>Todo List {isLoading && <span style={{ fontSize: '0.8em', color: '#6b7280' }}>Loading...</span>}</h2>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <input
+                            type="text"
+                            placeholder="New task..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            style={{ flex: 1 }}
+                            onKeyPress={(e) => e.key === 'Enter' && addTask()}
+                        />
+                        <button onClick={addTask} className="btn-primary" disabled={isLoading}>
+                            Add
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ flex: 1 }}
+                        />
+                        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+
+                    {filteredTasks.length === 0 ? (
+                        <p style={{ color: '#6b7280' }}>No tasks found.</p>
+                    ) : (
+                        filteredTasks.map((t, i) => (
+                            <div key={t.id || i} style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                backgroundColor: 'white',
+                                padding: '0.75rem',
+                                borderRadius: '0.5rem',
+                                marginBottom: '0.5rem',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={t.done}
+                                        onChange={() => toggleDone(i)}
+                                    />
+                                    <span style={{ 
+                                        textDecoration: t.done ? 'line-through' : 'none', 
+                                        color: t.done ? '#6b7280' : 'inherit' 
+                                    }}>
+                                        {t.text}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => deleteTask(i)}
+                                    style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            );
+        }
+
+        // Simple Auth Component (enhanced to work with API)
+        function Auth({ setStudentName, setStudentId, setTeacherName, setTeacherId, setRole, setLoggedIn }) {
+            const [name, setName] = useState('');
+            const [id, setId] = useState('');
+            const [msg, setMsg] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [role, setLocalRole] = useState('student'); // 'student' | 'teacher'
+
+            const apiService = new APIService('/api');
+
+            const login = async () => {
+                if (!name || !id) {
+                    setMsg(`Please enter both ${role === 'teacher' ? 'Teacher' : 'Student'} Name and ${role === 'teacher' ? 'Teacher' : 'Student'} ID.`);
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    if (role === 'teacher') {
+                        const response = await apiService.teacherLogin({ name, teacherId: id });
+                        setTeacherName(response.name || name);
+                        setTeacherId(response.teacherId || id);
+                        setRole('teacher');
+                        setLoggedIn(true);
+                    } else {
+                        // Student login
+                        const response = await apiService.login({ name, studentId: id });
+                        setStudentName(response.name || name);
+                        setStudentId(response.studentId || id);
+                        setRole('student');
+                        setLoggedIn(true);
+                    }
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    // Fallback to local login
+                    if (role === 'teacher') {
+                        setTeacherName(name);
+                        setTeacherId(id);
+                        setRole('teacher');
+                        setLoggedIn(true);
+                    } else {
+                        setStudentName(name);
+                        setStudentId(id);
+                        setRole('student');
+                        setLoggedIn(true);
+                    }
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div id="auth">
+                    <div className="card">
+                        <h2 className="auth-title">Login to Tutorly</h2>
+                        <div style={{ display:'flex', gap:'0.5rem', justifyContent:'center', marginBottom:'0.75rem' }}>
+                            <button type="button" className="btn-primary" onClick={() => setLocalRole('student')} disabled={role==='student'}>
+                                Student
+                            </button>
+                            <button type="button" className="btn-primary" onClick={() => setLocalRole('teacher')} disabled={role==='teacher'}>
+                                Teacher
+                            </button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); login(); }}>
+                            <div className="input-group">
+                                <label className="input-label">{role === 'teacher' ? 'Teacher Name' : 'Student Name'}</label>
+                                <input
+                                    type="text"
+                                    placeholder={role === 'teacher' ? 'e.g., Ms. Garcia' : 'e.g., Alex Johnson'}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label className="input-label">{role === 'teacher' ? 'Teacher ID' : 'Student ID'}</label>
+                                <input
+                                    type="text"
+                                    placeholder={role === 'teacher' ? 'e.g., T98765' : 'e.g., S12345'}
+                                    value={id}
+                                    onChange={(e) => setId(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="btn-row">
+                                <button className="btn-primary" type="submit" disabled={isLoading}>
+                                    {isLoading ? 'Logging in...' : (role === 'teacher' ? 'Login as Teacher' : 'Login as Student')}
+                                </button>
+                            </div>
+                        </form>
+                        {msg && <p className="error-msg">{msg}</p>}
+                    </div>
+                </div>
+            );
+        }
+
+        // Simple Teacher Home View
+        function TeacherHome({ teacherName, teacherId, onLogout }) {
+            const [students, setStudents] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+            const [selectedStudent, setSelectedStudent] = useState('');
+            const [title, setTitle] = useState('');
+            const [subject, setSubject] = useState('');
+            const [due, setDue] = useState('');
+            const [status, setStatus] = useState('Pending');
+            const [difficulty, setDifficulty] = useState('Medium');
+            const [score, setScore] = useState('');
+            const [creating, setCreating] = useState(false);
+
+            // Calendar
+            const [events, setEvents] = useState([]);
+            const [evtTitle, setEvtTitle] = useState('');
+            const [evtDate, setEvtDate] = useState('');
+            const [evtSubject, setEvtSubject] = useState('');
+            const [evtDesc, setEvtDesc] = useState('');
+            const [evtLoading, setEvtLoading] = useState(false);
+
+            const api = new APIService('/api');
+
+            useEffect(() => {
+                async function load() {
+                    try {
+                        setLoading(true);
+                        const [s, c] = await Promise.all([
+                            api.getTeacherStudents(),
+                            api.getTeacherCalendar(teacherId)
+                        ]);
+                        setStudents(s || []);
+                        setEvents(c || []);
+                        if ((s || []).length > 0) setSelectedStudent(s[0].studentId);
+                    } catch (e) {
+                        console.error(e);
+                        setError('Failed to load teacher data.');
+                    } finally {
+                        setLoading(false);
+                    }
+                }
+                if (teacherId) load();
+            }, [teacherId]);
+
+            async function createAssignment() {
+                if (!selectedStudent || !title.trim() || !subject || !due) return;
+                try {
+                    setCreating(true);
+                    await api.teacherCreateAssignment({
+                        teacherId,
+                        studentId: selectedStudent,
+                        title,
+                        subject,
+                        due,
+                        status,
+                        difficulty,
+                        score: score !== '' ? Number(score) : null,
+                    });
+                    setTitle(''); setSubject(''); setDue(''); setStatus('Pending'); setDifficulty('Medium'); setScore('');
+                    alert('Assignment created for student');
+                } catch (e) {
+                    console.error(e);
+                    alert('Failed to create assignment');
+                } finally {
+                    setCreating(false);
+                }
+            }
+
+            async function addEvent() {
+                if (!evtTitle.trim() || !evtDate) return;
+                try {
+                    setEvtLoading(true);
+                    const created = await api.createTeacherCalendarEvent(teacherId, {
+                        title: evtTitle,
+                        date: evtDate,
+                        subject: evtSubject,
+                        description: evtDesc
+                    });
+                    setEvents(prev => [...prev, created]);
+                    setEvtTitle(''); setEvtDate(''); setEvtSubject(''); setEvtDesc('');
+                } catch (e) {
+                    console.error(e);
+                    alert('Failed to add event');
+                } finally {
+                    setEvtLoading(false);
+                }
+            }
+
+            async function deleteEvent(id) {
+                try {
+                    await api.deleteTeacherCalendarEvent(teacherId, id);
+                    setEvents(prev => prev.filter(e => e.id !== id));
+                } catch (e) {
+                    console.error(e);
+                    alert('Failed to delete event');
+                }
+            }
+
+            return (
+                <div>
+                    <div className="navbar">
+                        <div className="logo-section">
+                            <strong>Tutorly</strong>
+                            <span style={{ color:'#6b7280' }}>Teacher Portal</span>
+                        </div>
+                        <div className="top-right">
+                            <button className="profile-button" onClick={onLogout}>Logout</button>
+                        </div>
+                    </div>
+                    <div className="main-content">
+                        <div className="card" style={{ marginBottom: '1rem' }}>
+                            <h2 style={{ marginTop: 0 }}>Welcome, {teacherName || 'Teacher'}!</h2>
+                            <p style={{ marginBottom: 0 }}>Teacher ID: <strong>{teacherId}</strong></p>
+                        </div>
+
+                        {error && <div className="card" style={{ color:'#b91c1c' }}>{error}</div>}
+
+                        <div className="card" style={{ marginBottom: '1rem' }}>
+                            <h3>Assign Task to a Student</h3>
+                            {loading ? (
+                                <p>Loading students…</p>
+                            ) : (
+                                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.5rem', alignItems:'center' }}>
+                                    <select value={selectedStudent} onChange={e=>setSelectedStudent(e.target.value)}>
+                                        {students.map(s => (
+                                            <option key={s.studentId} value={s.studentId}>{s.name} ({s.studentId})</option>
+                                        ))}
+                                    </select>
+                                    <input type="text" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} />
+                                    <input type="text" placeholder="Subject" value={subject} onChange={e=>setSubject(e.target.value)} />
+                                    <input type="date" value={due} onChange={e=>setDue(e.target.value)} />
+                                    <select value={status} onChange={e=>setStatus(e.target.value)}>
+                                        <option>Pending</option>
+                                        <option>In Progress</option>
+                                        <option>Completed</option>
+                                        <option>Overdue</option>
+                                    </select>
+                                    <select value={difficulty} onChange={e=>setDifficulty(e.target.value)}>
+                                        <option>Easy</option>
+                                        <option>Medium</option>
+                                        <option>Hard</option>
+                                    </select>
+                                    <input type="number" placeholder="Score (optional)" value={score} onChange={e=>setScore(e.target.value)} />
+                                    <button className="btn-primary" onClick={createAssignment} disabled={creating || loading || !selectedStudent || !title || !subject || !due}>Add Assignment</button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="card">
+                            <h3>Teacher Calendar</h3>
+                            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.5rem', alignItems:'center', marginBottom:'0.5rem' }}>
+                                <input type="text" placeholder="Event title" value={evtTitle} onChange={e=>setEvtTitle(e.target.value)} />
+                                <input type="date" value={evtDate} onChange={e=>setEvtDate(e.target.value)} />
+                                <input type="text" placeholder="Subject (optional)" value={evtSubject} onChange={e=>setEvtSubject(e.target.value)} />
+                                <input type="text" placeholder="Description (optional)" value={evtDesc} onChange={e=>setEvtDesc(e.target.value)} />
+                                <button className="btn-primary" onClick={addEvent} disabled={evtLoading || !evtTitle || !evtDate}>Add Event</button>
+                            </div>
+                            {events.length === 0 ? (
+                                <p style={{ color:'#6b7280' }}>No events yet.</p>
+                            ) : (
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th style={{width:'15%'}}>Date</th>
+                                            <th style={{width:'30%'}}>Title</th>
+                                            <th style={{width:'20%'}}>Subject</th>
+                                            <th>Description</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {events.map(ev => (
+                                            <tr key={ev.id}>
+                                                <td>{ev.date}</td>
+                                                <td>{ev.title}</td>
+                                                <td>{ev.subject || '-'}</td>
+                                                <td>{ev.description || '-'}</td>
+                                                <td>
+                                                    <button onClick={()=>deleteEvent(ev.id)} style={{ background:'#ef4444', color:'#fff', border:'none', padding:'0.35rem 0.65rem', borderRadius:'6px', cursor:'pointer' }}>Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Enhanced Assignments Component with API
+        function Assignments({ studentId }) {
+            const [assignments, setAssignments] = useState([]);
+            const [title, setTitle] = useState('');
+            const [subject, setSubject] = useState('');
+            const [due, setDue] = useState('');
+            const [status, setStatus] = useState('Pending');
+            const [difficulty, setDifficulty] = useState('Medium');
+            const [score, setScore] = useState('');
+            const [search, setSearch] = useState('');
+            const [filterStatus, setFilterStatus] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const apiService = new APIService('/api');
+
+            useEffect(() => {
+                loadAssignments();
+            }, [studentId]);
+
+            const loadAssignments = async () => {
+                if (!studentId) {
+                    // Load from localStorage as fallback
+                    const saved = localStorage.getItem(`assignments_${studentId}`);
+                    if (saved) {
+                        setAssignments(JSON.parse(saved));
+                    }
+                    return;
+                }
+
+                try {
+                    setIsLoading(true);
+                    const data = await apiService.getAssignments(studentId);
+                    setAssignments(data);
+                } catch (error) {
+                    console.error('Failed to load assignments:', error);
+                    const saved = localStorage.getItem(`assignments_${studentId}`);
+                    if (saved) {
+                        setAssignments(JSON.parse(saved));
+                    }
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const saveAssignments = (newAssignments) => {
+                localStorage.setItem(`assignments_${studentId}`, JSON.stringify(newAssignments));
+                setAssignments(newAssignments);
+            };
+
+            const addAssignment = async () => {
+                if (!title.trim() || !subject || !due) return;
+
+                const newAssignment = {
+                    title, subject, due, status, difficulty, score,
+                    id: Date.now(),
+                    createdAt: new Date().toISOString()
+                };
+
+                try {
+                    if (studentId) {
+                        const saved = await apiService.createAssignment(studentId, newAssignment);
+                        saveAssignments([...assignments, saved]);
+                    } else {
+                        saveAssignments([...assignments, newAssignment]);
+                    }
+                    
+                    // Reset form
+                    setTitle(''); setSubject(''); setDue(''); 
+                    setStatus('Pending'); setDifficulty('Medium'); setScore('');
+                } catch (error) {
+                    console.error('Failed to add assignment:', error);
+                    saveAssignments([...assignments, newAssignment]);
+                    setTitle(''); setSubject(''); setDue(''); 
+                    setStatus('Pending'); setDifficulty('Medium'); setScore('');
+                }
+            };
+
+            const removeAssignment = async (index) => {
+                const assignment = assignments[index];
+
+                try {
+                    if (assignment.id) {
+                        await apiService.deleteAssignment(assignment.id);
+                    }
+                    const newAssignments = assignments.filter((_, i) => i !== index);
+                    saveAssignments(newAssignments);
+                } catch (error) {
+                    console.error('Failed to delete assignment:', error);
+                    const newAssignments = assignments.filter((_, i) => i !== index);
+                    saveAssignments(newAssignments);
+                }
+            };
+
+            const filteredAssignments = assignments.filter((a) =>
+                a.title.toLowerCase().includes(search.toLowerCase()) &&
+                (filterStatus === '' || a.status === filterStatus)
+            );
+
+            return (
+                <div style={{ padding: '1.5rem' }}>
+                    <h2>Assignment Database {isLoading && <span style={{ fontSize: '0.8em', color: '#6b7280' }}>Loading...</span>}</h2>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <input
+                            type="text"
+                            placeholder="Search assignments..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            style={{ flex: '1 1 200px' }}
+                        />
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            style={{ flex: '0 0 150px' }}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <input
+                            type="text"
+                            placeholder="Assignment Title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            style={{ flex: '1 1 150px' }}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Subject"
+                            value={subject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            style={{ flex: '1 1 120px' }}
+                        />
+                        <input
+                            type="date"
+                            value={due}
+                            onChange={(e) => setDue(e.target.value)}
+                            style={{ flex: '1 1 150px' }}
+                        />
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            style={{ flex: '1 1 120px' }}
+                        >
+                            <option>Pending</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                            <option>Overdue</option>
+                        </select>
+                        <select
+                            value={difficulty}
+                            onChange={(e) => setDifficulty(e.target.value)}
+                            style={{ flex: '1 1 100px' }}
+                        >
+                            <option>Easy</option>
+                            <option>Medium</option>
+                            <option>Hard</option>
+                        </select>
+                        <input
+                            type="number"
+                            placeholder="Score"
+                            value={score}
+                            onChange={(e) => setScore(e.target.value)}
+                            style={{ flex: '1 1 80px' }}
+                        />
+                        <button onClick={addAssignment} className="btn-primary" disabled={isLoading}>
+                            Add
+                        </button>
+                    </div>
+
+                    {filteredAssignments.length === 0 ? (
+                        <p style={{ color: '#6b7280' }}>No assignments found.</p>
+                    ) : (
+                        <div style={{ backgroundColor: 'white', borderRadius: '0.5rem', padding: '1rem', overflowX: 'auto' }}>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Assignment</th>
+                                        <th>Subject</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Difficulty</th>
+                                        <th>Score</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredAssignments.map((a, i) => (
+                                        <tr key={a.id || i}>
+                                            <td>{a.title}</td>
+                                            <td>{a.subject}</td>
+                                            <td>{a.due}</td>
+                                            <td>{a.status}</td>
+                                            <td>{a.difficulty}</td>
+                                            <td>{a.score}</td>
+                                            <td>
+                                                <button
+                                                    onClick={() => removeAssignment(i)}
+                                                    style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Progress Tracker: per-subject histogram of recent scores
+        function ProgressTracker({ studentId }) {
+            const [data, setData] = useState({});
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
+            const subjectsOrder = ['Math','Science','English','History'];
+
+            useEffect(() => { fetchData(); }, [studentId]);
+
+            async function fetchData() {
+                if (!studentId) return;
+                try {
+                    setLoading(true); setError('');
+                    const res = await fetch(`/api/performance/${studentId}`);
+                    if (!res.ok) throw new Error('Failed to fetch performance');
+                    const json = await res.json();
+                    setData(json || {});
+                } catch (e) { setError(e.message || 'Failed to load'); }
+                finally { setLoading(false); }
+            }
+
+            function buildHistogram(scores) {
+                const bins = [0,0,0,0,0];
+                for (const s of scores) {
+                    const v = s.score ?? s;
+                    if (v < 60) bins[0]++; else if (v < 70) bins[1]++; else if (v < 80) bins[2]++; else if (v < 90) bins[3]++; else bins[4]++;
+                }
+                const max = Math.max(1, ...bins);
+                return { bins, max };
+            }
+
+            function avg(scores) {
+                if (!scores || scores.length === 0) return '-';
+                const s = scores.reduce((a,b)=> a + (b.score ?? b), 0);
+                return Math.round(s / scores.length);
+            }
+
+            const subjects = Object.keys(data).length ? Object.keys(data) : subjectsOrder;
+
+            return (
+                <div className="card" style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <h3 style={{ margin: 0 }}>Progress Tracker</h3>
+                        {loading && <span style={{ color:'#6b7280', fontSize:'0.9rem' }}>Loading…</span>}
+                    </div>
+                    {error && <div style={{ color:'#b91c1c', marginBottom:'0.5rem' }}>{error}</div>}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(180px, 1fr))', gap: '12px' }}>
+                        {subjects.map((subj) => {
+                            const scores = data[subj] || [];
+                            const { bins, max } = buildHistogram(scores);
+                            const labels = ['50s','60s','70s','80s','90-100'];
+                            const color = ({'Math':'#2563eb','Science':'#059669','English':'#7c3aed','History':'#ea580c'}[subj]) || '#374151';
+                            return (
+                                <div key={subj} style={{ border:'1px solid #e5e7eb', borderRadius:'10px', padding:'10px' }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:'6px' }}>
+                                        <div style={{ fontWeight:600 }}>{subj}</div>
+                                        <div style={{ color:'#6b7280', fontSize:'12px' }}>Avg: {avg(scores)}</div>
+                                    </div>
+                                    <div style={{ display:'flex', alignItems:'flex-end', gap:'8px', height:'90px', padding:'8px 4px' }}>
+                                        {bins.map((count, i) => (
+                                            <div key={i} title={`${labels[i]}: ${count}`} style={{ width:'18%', minWidth:'20px', background:color, opacity:0.9, height: `${Math.round((count/max)*100)}%`, borderRadius:'6px' }} />
+                                        ))}
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', color:'#6b7280', fontSize:'11px', marginTop:'4px' }}>
+                                        {labels.map(l => <span key={l}>{l}</span>)}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        // Calendar View for Dashboard (color-coded + edit modal)
+        function CalendarView({ studentId }) {
+            const [current, setCurrent] = useState(new Date());
+            const [assignments, setAssignments] = useState([]);
+            const [title, setTitle] = useState('');
+            const [subject, setSubject] = useState('');
+            const [due, setDue] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [modalOpen, setModalOpen] = useState(false);
+            const [modalDateISO, setModalDateISO] = useState('');
+            const [editing, setEditing] = useState([]);
+            const api = new APIService('/api');
+
+            const subjectColors = { Math: '#2563eb', Science: '#059669', English: '#7c3aed', History: '#ea580c', Default: '#374151' };
+
+            useEffect(() => { load(); }, [studentId]);
+            async function load() {
+                if (!studentId) return;
+                try { const data = await api.getAssignments(studentId); setAssignments(data || []); } catch (e) { console.warn('Calendar load failed', e); }
+            }
+
+            async function quickAdd() {
+                if (!title.trim() || !subject || !due) return;
+                try {
+                    setLoading(true);
+                    const created = await api.createAssignment(studentId, { title, subject, due, status: 'Pending', difficulty: 'Medium' });
+                    setAssignments(prev => [...prev, created]); setTitle(''); setSubject(''); setDue('');
+                } catch (e) { console.error('Quick add failed', e); } finally { setLoading(false); }
+            }
+
+            function openModal(iso) {
+                const items = (assignments || []).filter(a => (a.due_date || a.due) === iso);
+                setEditing(items.map(a => ({ ...a, due: a.due_date || a.due }))); setModalDateISO(iso); setModalOpen(true);
+            }
+
+            async function saveEdit(idx) {
+                const item = editing[idx]; if (!item || !item.id) return;
+                try {
+                    await api.updateAssignment(item.id, { title: item.title, subject: item.subject, due_date: item.due, status: item.status || 'Pending', difficulty: item.difficulty || 'Medium', score: item.score || null, });
+                    await load();
+                } catch (e) { console.error('Save failed', e); }
+            }
+
+            async function deleteItem(idx) {
+                const item = editing[idx]; if (!item || !item.id) return;
+                try { await api.deleteAssignment(item.id); const next = editing.slice(); next.splice(idx,1); setEditing(next); await load(); } catch (e) { console.error('Delete failed', e); }
+            }
+
+            function updateField(idx, key, value) { const next = editing.slice(); next[idx] = { ...next[idx], [key]: value }; setEditing(next); }
+
+            const year = current.getFullYear(); const month = current.getMonth();
+            const firstDay = new Date(year, month, 1); const startDay = firstDay.getDay();
+            const weeks = []; let day = 1 - startDay;
+            for (let w = 0; w < 6; w++) { const week = []; for (let d = 0; d < 7; d++) { const date = new Date(year, month, day); const inMonth = date.getMonth() === month; const iso = date.toISOString().slice(0,10); const dueItems = assignments.filter(a => (a.due_date || a.due) === iso); week.push({ date, inMonth, iso, dueItems }); day++; } weeks.push(week); }
+
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            return (
+                <div className="card calendar-card">
+                    <div className="calendar-header">
+                        <h3 className="calendar-title">Calendar • {months[month]} {year}</h3>
+                        <div className="calendar-nav">
+                            <button className="btn-primary" onClick={() => setCurrent(new Date(year, month - 1, 1))}>{'<'}</button>
+                            <button className="btn-primary" onClick={() => setCurrent(new Date())}>Today</button>
+                            <button className="btn-primary" onClick={() => setCurrent(new Date(year, month + 1, 1))}>{'>'}</button>
+                        </div>
+                    </div>
+
+                    <div className="calendar-grid">
+                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                            <div key={d} className="calendar-weekday">{d}</div>
+                        ))}
+                        {weeks.map((week, i) => week.map((cell, j) => (
+                            <div key={i+'-'+j} onClick={() => openModal(cell.iso)} className={`calendar-cell ${cell.inMonth ? '' : 'outside'}`}>
+                                <div className="calendar-date">{cell.date.getDate()}</div>
+                                <div className="calendar-events">
+                                    {cell.dueItems.slice(0,3).map((a, idx) => (
+                                        <div key={idx} title={`${a.subject} • ${a.title}`} className="event-pill" style={{ background: subjectColors[a.subject] || subjectColors.Default }}>{a.title}</div>
+                                    ))}
+                                    {cell.dueItems.length > 3 && (<div className="event-more">+{cell.dueItems.length - 3} more</div>)}
+                                </div>
+                            </div>
+                        )))}
+                    </div>
+
+                    <div className="quick-add">
+                        <input type="text" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} />
+                        <input type="text" placeholder="Subject" value={subject} onChange={e=>setSubject(e.target.value)} />
+                        <input type="date" value={due} onChange={e=>setDue(e.target.value)} />
+                        <button className="btn-primary" onClick={quickAdd} disabled={loading || !title || !subject || !due}>Add Assignment</button>
+                    </div>
+
+                    {modalOpen && (
+                        <div onClick={() => setModalOpen(false)} className="overlay">
+                            <div onClick={(e) => e.stopPropagation()} className="modal-card">
+                                <div className="modal-header">
+                                    <h3>Due {modalDateISO}</h3>
+                                    <button className="btn-primary" onClick={() => setModalOpen(false)}>Close</button>
+                                </div>
+                                {editing.length === 0 ? (
+                                    <p>No assignments due on this date.</p>
+                                ) : (
+                                    <div className="modal-content">
+                                        {editing.map((item, idx) => (
+                                            <div key={item.id || idx} className="modal-item">
+                                                <input type="text" value={item.title || ''} onChange={(e)=>updateField(idx,'title',e.target.value)} placeholder="Title" />
+                                                <input type="text" value={item.subject || ''} onChange={(e)=>updateField(idx,'subject',e.target.value)} placeholder="Subject" />
+                                                <input type="date" value={item.due || ''} onChange={(e)=>updateField(idx,'due',e.target.value)} />
+                                                <select value={item.status || 'Pending'} onChange={(e)=>updateField(idx,'status',e.target.value)}>
+                                                    <option>Pending</option>
+                                                    <option>In Progress</option>
+                                                    <option>Completed</option>
+                                                    <option>Overdue</option>
+                                                </select>
+                                                <select value={item.difficulty || 'Medium'} onChange={(e)=>updateField(idx,'difficulty',e.target.value)}>
+                                                    <option>Easy</option>
+                                                    <option>Medium</option>
+                                                    <option>Hard</option>
+                                                </select>
+                                                <div className="modal-actions">
+                                                    <button className="btn-primary" onClick={()=>saveEdit(idx)}>Save</button>
+                                                    <button onClick={()=>deleteItem(idx)} style={{ background:'#ef4444', color:'#fff', border:'none', padding:'0.5rem 0.75rem', borderRadius:'6px', cursor:'pointer' }}>Delete</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [studentName, setStudentName] = useState('');
+            const [studentId, setStudentId] = useState('');
+            const [teacherName, setTeacherName] = useState('');
+            const [teacherId, setTeacherId] = useState('');
+            const [role, setRole] = useState('student');
+            const [loggedIn, setLoggedIn] = useState(false);
+            const [currentPage, setCurrentPage] = useState('dashboard');
+            const [tab, setTab] = useState('ai-tutor');
+            const [profileOpen, setProfileOpen] = useState(false);
+            const [theme, setTheme] = useState(localStorage.getItem('tutorly_theme') || 'light');
+            
+
+            // Apply theme to body and persist
+            useEffect(() => {
+                document.body.classList.toggle('dark', theme === 'dark');
+                localStorage.setItem('tutorly_theme', theme);
+            }, [theme]);
+
+            const handleLogout = () => {
+                setLoggedIn(false);
+                setStudentName('');
+                setStudentId('');
+                setTeacherName('');
+                setTeacherId('');
+                setRole('student');
+                setProfileOpen(false);
+            };
+
+            // Simple routing
+            useEffect(() => {
+                const handleHashChange = () => {
+                    const hash = window.location.hash.slice(1);
+                    if (hash === 'ai-tutor') {
+                        setCurrentPage('ai-tutor');
+                    } else {
+                        setCurrentPage('dashboard');
+                    }
+                };
+
+                window.addEventListener('hashchange', handleHashChange);
+                handleHashChange();
+
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, []);
+
+            if (!loggedIn) {
+                return (
+                    <div>
+                        <Auth
+                            setStudentName={setStudentName}
+                            setStudentId={setStudentId}
+                            setTeacherName={setTeacherName}
+                            setTeacherId={setTeacherId}
+                            setRole={setRole}
+                            setLoggedIn={setLoggedIn}
+                        />
+                    </div>
+                );
+            }
+
+            // If teacher is logged in, show Teacher view
+            if (role === 'teacher') {
+                return (
+                    <TeacherHome
+                        teacherName={teacherName}
+                        teacherId={teacherId}
+                        onLogout={handleLogout}
+                    />
+                );
+            }
+
+            return (
+                <div>
+                    {/* Navbar */}
+                    <nav className="navbar">
+                        <div className="logo-section">
+                            <div style={{ 
+                                width: '48px', 
+                                height: '48px', 
+                                backgroundColor: '#2563eb', 
+                                borderRadius: '0.5rem', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                color: 'white', 
+                                fontWeight: 'bold' 
+                            }}>
+                                <img src="/static/logo.png" alt="Tutorly Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0.5rem' }} />
+                            </div>
+                            <span style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>Tutorly</span>
+                        </div>
+                        <div className="nav-links">
+                            <a 
+                                href="#" 
+                                className={currentPage === 'dashboard' ? 'active' : ''} 
+                                onClick={(e) => { e.preventDefault(); window.location.hash = ''; }}
+                            >
+                                Dashboard
+                            </a>
+                            <a 
+                                href="#ai-tutor" 
+                                className={currentPage === 'ai-tutor' ? 'active' : ''}
+                            >
+                                AI Tutor
+                            </a>
+                        </div>
+                        <div className="top-right">
+                            <div style={{ position: 'relative' }}>
+                                <button className="profile-button" onClick={() => setProfileOpen(v => !v)}>
+                                    Profile ▾
+                                </button>
+                                {profileOpen && (
+                                    <div className="profile-dropdown" onMouseLeave={() => setProfileOpen(false)}>
+                                        <div className="item" onClick={(e)=>e.stopPropagation()}>
+                                            <span>Theme</span>
+                                            <label className="switch">
+                                                <input type="checkbox" checked={theme === 'dark'} onChange={(e)=> setTheme(e.target.checked ? 'dark' : 'light')} />
+                                                <span className="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div className="item" onClick={handleLogout}>
+                                            <span>Logout</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </nav>
+
+                    {currentPage === 'ai-tutor' ? (
+                        <div>
+                            <div className="secondary-nav">
+                                {['ai-tutor', 'calendar'].map((item) => (
+                                    <button
+                                        key={item}
+                                        onClick={() => setTab(item)}
+                                        className={tab === item ? 'active-tab' : ''}
+                                    >
+                                        {item === 'ai-tutor' ? 'AI Tutor' : item.charAt(0).toUpperCase() + item.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="main-content">
+                                {tab === 'ai-tutor' && (
+                                    <ChatbotPage
+                                        setLoggedIn={setLoggedIn}
+                                        setStudentName={setStudentName}
+                                        setStudentId={setStudentId}
+                                        studentId={studentId}
+                                    />
+                                )}
+
+                                {tab === 'todo' && (
+                                    <div className="card">
+                                        <TodoList studentId={studentId} />
+                                    </div>
+                                )}
+
+                                {tab === 'calendar' && (
+                                    <div className="card">
+                                        <Assignments studentId={studentId} />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="main-content">
+                            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                                <h1>Welcome back, {studentName}!</h1>
+                                <p>Ready to continue your learning journey?</p>
+                                <button 
+                                    style={{ 
+                                        backgroundColor: '#000', 
+                                        color: '#fff', 
+                                        padding: '0.5rem 1.5rem', 
+                                        borderRadius: '0.5rem', 
+                                        border: 'none', 
+                                        cursor: 'pointer', 
+                                        marginTop: '1rem' 
+                                    }}
+                                    onClick={() => window.location.hash = 'ai-tutor'}
+                                >
+                                    Go to AI Tutor
+                                </button>
+                            </div>
+
+                            <div style={{ padding: '0 1.5rem' }}>
+                                <ProgressTracker studentId={studentId} />
+                            </div>
+                            <div style={{ padding: '0 1.5rem' }}>
+                                <CalendarView studentId={studentId} />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
