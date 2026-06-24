@@ -128,6 +128,11 @@ def setup_static_files():
     """Set up static file serving if index.html exists"""
     static_dir = Path('static')
     index_file = Path('index.html')
+    vite_assets = static_dir / 'assets'
+
+    if vite_assets.exists():
+        print("📦 React build detected in static/assets; keeping compiled frontend")
+        return
     
     if index_file.exists():
         # Create static directory if it doesn't exist

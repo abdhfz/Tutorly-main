@@ -2,13 +2,17 @@
   "name": "tutorly-frontend",
   "version": "1.0.0",
   "description": "AI-Powered Educational Platform Frontend",
-  "main": "index.html",
+  "type": "module",
   "scripts": {
     "start": "python run_server.py",
     "server": "python app.py",
-    "dev": "python run_server.py",
+    "dev": "vite",
+    "dev:api": "python run_server.py",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "python run_server.py",
     "install-deps": "pip install -r requirements.txt",
-    "setup": "pip install -r requirements.txt && python run_server.py",
+    "setup": "npm install && pip install -r requirements.txt && npm run build && python run_server.py",
     "health": "curl http://localhost:5000/api/health",
     "test-api": "curl -X GET http://localhost:5000/api/health && echo '\nAPI is working!'"
   },
@@ -34,6 +38,15 @@
   "engines": {
     "python": ">=3.7"
   },
-  "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^6.4.2"
+  }
 }
