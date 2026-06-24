@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from flask_cors import CORS
 import sqlite3
 import os
@@ -261,13 +261,13 @@ def process_image(image_file):
 class GeminiService:
     def __init__(self, api_key):
         self.api_key = api_key
-        # Updated to use Gemini 2.5 Flash
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
+        self.model = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash').strip()
+        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
     
     def generate_response(self, message, conversation_history=None):
-        """Generate AI response using Gemini 2.5 Flash API"""
+        """Generate AI response using Gemini API"""
         if not self.api_key:
-            return get_fallback_response(message)
+            raise RuntimeError('GEMINI_API_KEY is not configured')
         
         # Build context with system prompt and conversation history
         context_parts = [TUTORLY_SYSTEM_PROMPT]
@@ -332,29 +332,28 @@ class GeminiService:
                 data = response.json()
                 if 'candidates' in data and len(data['candidates']) > 0:
                     return data['candidates'][0]['content']['parts'][0]['text'].strip()
-                else:
-                    return get_fallback_response(message)
+                raise RuntimeError('Gemini returned no candidates')
             else:
                 print(f"Gemini API Error: {response.status_code} - {response.text}")
-                return get_fallback_response(message)
+                raise RuntimeError(f"Gemini API Error {response.status_code}: {response.text}")
                 
         except requests.exceptions.Timeout:
             print("Gemini API timeout")
-            return get_fallback_response(message)
+            raise RuntimeError('Gemini API timeout')
         except requests.exceptions.RequestException as e:
             print(f"Gemini API network error: {e}")
-            return get_fallback_response(message)
+            raise RuntimeError(f"Gemini API network error: {e}")
         except (KeyError, IndexError) as e:
             print(f"Gemini API response parsing error: {e}")
-            return get_fallback_response(message)
+            raise RuntimeError(f"Gemini API response parsing error: {e}")
         except Exception as e:
             print(f"Gemini API unexpected error: {e}")
-            return get_fallback_response(message)
+            raise
 
     def generate_response_with_image(self, message, image_base64, conversation_history=None):
-        """Generate AI response using Gemini 2.5 Flash API with image input"""
+        """Generate AI response using Gemini API with image input"""
         if not self.api_key:
-            return get_fallback_response(message)
+            raise RuntimeError('GEMINI_API_KEY is not configured')
         
         # Build context with system prompt and conversation history
         context_parts = [TUTORLY_SYSTEM_PROMPT]
@@ -426,24 +425,23 @@ class GeminiService:
                 data = response.json()
                 if 'candidates' in data and len(data['candidates']) > 0:
                     return data['candidates'][0]['content']['parts'][0]['text'].strip()
-                else:
-                    return "I can see your image! However, I'm having trouble analyzing it right now. Could you describe what you'd like help with?"
+                raise RuntimeError('Gemini returned no candidates')
             else:
                 print(f"Gemini API Error: {response.status_code} - {response.text}")
-                return "I can see your image, but I'm having some technical difficulties. Could you try describing the problem in text?"
+                raise RuntimeError(f"Gemini API Error {response.status_code}: {response.text}")
                 
         except requests.exceptions.Timeout:
             print("Gemini API timeout")
-            return "I can see your image, but the response is taking too long. Could you try again or describe the problem in text?"
+            raise RuntimeError('Gemini API timeout')
         except requests.exceptions.RequestException as e:
             print(f"Gemini API network error: {e}")
-            return "I can see your image, but I'm having connection issues. Could you try again later?"
+            raise RuntimeError(f"Gemini API network error: {e}")
         except (KeyError, IndexError) as e:
             print(f"Gemini API response parsing error: {e}")
-            return "I can see your image, but I'm having trouble processing the response. Could you try again?"
+            raise RuntimeError(f"Gemini API response parsing error: {e}")
         except Exception as e:
             print(f"Gemini API unexpected error: {e}")
-            return "I can see your image, but something unexpected happened. Could you try again or describe the problem in text?"
+            raise
 
 # Authentication Routes
 @app.route('/api/auth/login', methods=['POST'])
@@ -831,7 +829,13 @@ def chat_with_ai(student_id):
     
     # Generate AI response
     gemini = GeminiService(api_key)
-    ai_response = gemini.generate_response(message, [dict(h) for h in history])
+    try:
+        ai_response = gemini.generate_response(message, [dict(h) for h in history])
+    except RuntimeError as e:
+        return jsonify({
+            'error': 'Gemini request failed',
+            'details': str(e)
+        }), 502
     
     # Save both user message and AI response
     conn = get_db_connection()
@@ -890,7 +894,13 @@ def chat_with_ai_image(student_id):
     
     # Generate AI response with image
     gemini = GeminiService(api_key)
-    ai_response = gemini.generate_response_with_image(message, image_base64, [dict(h) for h in history])
+    try:
+        ai_response = gemini.generate_response_with_image(message, image_base64, [dict(h) for h in history])
+    except RuntimeError as e:
+        return jsonify({
+            'error': 'Gemini image request failed',
+            'details': str(e)
+        }), 502
     
     # Save both user message and AI response
     conn = get_db_connection()
@@ -994,7 +1004,7 @@ def health_check():
 # Route to serve the main HTML file
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return redirect('/static/')
 
 # Route to serve the frontend at /static/ path
 @app.route('/static/')
