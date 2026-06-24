@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/tutorly.git"
+    "url": "https://github.com/abdhfz/Tutorly-main.git"
   },
   "keywords": [
     "education",
@@ -29,12 +29,12 @@
     "react",
     "learning"
   ],
-  "author": "Your Name",
+  "author": "abdhfz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/your-username/tutorly/issues"
+    "url": "https://github.com/abdhfz/Tutorly-main/issues"
   },
-  "homepage": "https://github.com/your-username/tutorly#readme",
+  "homepage": "https://github.com/abdhfz/Tutorly-main#readme",
   "engines": {
     "python": ">=3.7"
   },
