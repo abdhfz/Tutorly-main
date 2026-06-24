@@ -40,6 +40,10 @@ env/
 instance/
 .webassets-cache
 
+# User uploads
+uploads/*
+!uploads/.gitkeep
+
 # Database
 *.db
 *.sqlite

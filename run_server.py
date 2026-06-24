@@ -80,7 +80,7 @@ def get_server_config():
     """Get server configuration from environment or defaults"""
     config = {
         'host': os.environ.get('HOST', '0.0.0.0'),
-        'port': int(os.environ.get('PORT', 8000)),
+        'port': int(os.environ.get('PORT', 5000)),
         'debug': os.environ.get('DEBUG', 'True').lower() == 'true',
         'flask_env': os.environ.get('FLASK_ENV', 'development')
     }
